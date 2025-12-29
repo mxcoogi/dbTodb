@@ -1,0 +1,4 @@
+rootProject.name = 'dbTodb'
+include 'core'
+include 'batch'
+include 'api'

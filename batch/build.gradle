@@ -1,0 +1,18 @@
+plugins {
+    id 'org.springframework.boot' version '3.5.6'
+}
+
+dependencies {
+    implementation project(':core')
+    implementation 'org.springframework.boot:spring-boot-starter-batch'
+    implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+}
+
+/* 실행 모듈 */
+bootJar {
+    enabled = true
+}
+
+jar {
+    enabled = false
+}
