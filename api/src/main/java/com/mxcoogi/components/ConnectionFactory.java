@@ -4,37 +4,25 @@ import com.mxcoogi.eums.DatabaseType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import javax.sql.DataSource;
+
 import java.sql.Connection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+import java.sql.DriverManager;
 
 @Component
 public class ConnectionFactory {
 
-    private final Map<String, DatabaseConnector> connectorMap;
-
-    public ConnectionFactory(List<DatabaseConnector> connectors) {
-        this.connectorMap = connectors.stream()
-                .collect(Collectors.toMap(
-                        DatabaseConnector::getName,
-                        Function.identity()
-                ));
-    }
 
     public Connection create(DatabaseType type, String url, String username, String password) {
-        DatabaseConnector connector = connectorMap.get(type.name());
+        try {
+            switch (type) {
+                case MYSQL -> Class.forName("com.mysql.cj.jdbc.Driver");
+                case POSTGRESQL -> Class.forName("org.postgresql.Driver");
+                case ORACLE -> Class.forName("oracle.jdbc.OracleDriver");
+            }
 
-        if (connector == null) {
-            throw new IllegalArgumentException("Unsupported DB type");
+            return DriverManager.getConnection(url, username, password);
+        } catch (Exception e) {
+            throw new RuntimeException("DB Connection failed", e);
         }
-        return connector.createConnection(
-                username,
-                password,
-                url
-        );
     }
 }

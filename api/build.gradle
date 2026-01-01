@@ -9,6 +9,7 @@ dependencies {
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
     runtimeOnly 'com.mysql:mysql-connector-j'
+    implementation 'org.postgresql:postgresql:42.7.7'
 }
 
 /* 실행 모듈 */

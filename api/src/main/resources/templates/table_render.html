@@ -11,8 +11,8 @@
 
     #erd {
       position: relative;
-      width: 2000px;
-      height: 1200px;
+      width: 3000px;
+      height: 1600px;
     }
 
     svg {
@@ -41,6 +41,10 @@
       user-select: none;
     }
 
+    .table-header.target {
+      background: #27ae60;
+    }
+
     .column {
       padding: 6px 10px;
       font-size: 13px;
@@ -61,58 +65,65 @@
 <body>
 
 <div id="erd">
-  <svg id="lines" width="2000" height="1200"></svg>
+  <svg id="lines" width="3000" height="1600"></svg>
 </div>
 
 <script>
   const result = JSON.parse(sessionStorage.getItem("dbResult"));
-  const tables = result.sourceTable;
-
   const erd = document.getElementById("erd");
   const svg = document.getElementById("lines");
 
+  const allTables = [];
+
   /* =========================
-     1️⃣ 테이블 렌더링
+     1️⃣ 테이블 렌더
   ========================= */
-  tables.forEach((table, index) => {
-    const div = document.createElement("div");
-    div.className = "table";
-    div.dataset.table = table.tableName;
+  renderTables(result.sourceTable, "source", 50);
+  renderTables(result.targetTable, "target", 1600);
 
-    div.style.left = (50 + (index % 4) * 300) + "px";
-    div.style.top = (50 + Math.floor(index / 4) * 260) + "px";
+  function renderTables(tables, scope, startX) {
+    tables.forEach((table, index) => {
+      const div = document.createElement("div");
+      div.className = "table";
+      div.dataset.table = table.tableName;
+      div.dataset.scope = scope;
 
-    const header = document.createElement("div");
-    header.className = "table-header";
-    header.textContent = table.tableName;
-    div.appendChild(header);
+      div.style.left = (startX + (index % 4) * 300) + "px";
+      div.style.top = (50 + Math.floor(index / 4) * 260) + "px";
 
-    table.columns.forEach(col => {
-      const c = document.createElement("div");
-      c.className = "column";
-      c.id = `${table.tableName}.${col.name}`;
+      const header = document.createElement("div");
+      header.className = "table-header " + (scope === "target" ? "target" : "");
+      header.textContent = `${scope.toUpperCase()} · ${table.tableName}`;
+      div.appendChild(header);
 
-      let text = `${col.name} : ${col.type}`;
+      table.columns.forEach(col => {
+        const c = document.createElement("div");
+        c.className = "column";
+        c.id = `${scope}.${table.tableName}.${col.name}`;
 
-      if (table.primaryKeys.some(pk => pk.columnName === col.name)) {
-        c.classList.add("pk");
-        text = "🔑 " + text;
-      }
+        let text = `${col.name} : ${col.type}`;
 
-      if (table.foreignKeys.some(fk => fk.fkColumn === col.name)) {
-        c.classList.add("fk");
-        text = "🔗 " + text;
-      }
+        if (table.primaryKeys.some(pk => pk.columnName === col.name)) {
+          c.classList.add("pk");
+          text = "🔑 " + text;
+        }
 
-      c.textContent = text;
-      div.appendChild(c);
+        if (table.foreignKeys.some(fk => fk.fkColumn === col.name)) {
+          c.classList.add("fk");
+          text = "🔗 " + text;
+        }
+
+        c.textContent = text;
+        div.appendChild(c);
+      });
+
+      erd.appendChild(div);
+      allTables.push({ ...table, scope });
     });
-
-    erd.appendChild(div);
-  });
+  }
 
   /* =========================
-     2️⃣ SVG 화살표 정의
+     2️⃣ SVG 화살표
   ========================= */
   function initSvg() {
     svg.innerHTML = `
@@ -125,9 +136,6 @@
     `;
   }
 
-  /* =========================
-     3️⃣ FK 선 그리기
-  ========================= */
   function drawLine(fromEl, toEl) {
     const f = fromEl.getBoundingClientRect();
     const t = toEl.getBoundingClientRect();
@@ -151,19 +159,24 @@
 
   function redrawLines() {
     initSvg();
-    tables.forEach(table => {
+
+    allTables.forEach(table => {
       table.foreignKeys.forEach(fk => {
-        const from = document.getElementById(`${table.tableName}.${fk.fkColumn}`);
-        const to = document.getElementById(`${fk.pkTable}.${fk.pkColumn}`);
+        const from = document.getElementById(
+                `${table.scope}.${table.tableName}.${fk.fkColumn}`
+        );
+        const to = document.getElementById(
+                `${table.scope}.${fk.pkTable}.${fk.pkColumn}`
+        );
         if (from && to) drawLine(from, to);
       });
     });
   }
 
-  setTimeout(redrawLines, 100);
+  setTimeout(redrawLines, 150);
 
   /* =========================
-     4️⃣ 드래그 & 드롭
+     3️⃣ 드래그 & 드롭
   ========================= */
   let dragging = null;
   let offsetX = 0;
