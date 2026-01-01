@@ -18,7 +18,7 @@ public class ApiController {
 
     @PostMapping("/connection")
     public ResponseEntity<?> connection(@RequestBody ConnectionDto request){
-        datasourceConnectionTestService.testConnection(request);
-        return ResponseEntity.ok(null);
+        Object data = datasourceConnectionTestService.testConnection(request);
+        return ResponseEntity.ok(data);
     }
 }

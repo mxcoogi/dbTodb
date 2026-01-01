@@ -39,6 +39,14 @@
     <br>
     <button type="button" onclick="testConnection()">Test Connection</button>
 
+    <hr>
+
+    <h3>Source Tables</h3>
+    <div id="sourceTables"></div>
+
+    <h3>Target Tables</h3>
+    <div id="targetTables"></div>
+
 </form>
 
 <script>
@@ -51,8 +59,33 @@
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(data)
         })
-            .then(res => res.text())
-            .then(alert);
+            .then(res => res.json())
+            .then(renderTables)
+            .catch(err => alert("Connection failed"));
+    }
+
+    function renderTables(result) {
+        renderTableList("sourceTables", result.sourceTable);
+        renderTableList("targetTables", result.targetTable);
+    }
+
+    function renderTableList(elementId, tables) {
+        const container = document.getElementById(elementId);
+        container.innerHTML = "";
+
+        if (!tables || tables.length === 0) {
+            container.innerHTML = "<p>No tables found</p>";
+            return;
+        }
+
+        const ul = document.createElement("ul");
+        tables.forEach(t => {
+            const li = document.createElement("li");
+            li.textContent = `${t.schema}.${t.tableName}`;
+            ul.appendChild(li);
+        });
+
+        container.appendChild(ul);
     }
 </script>
 
