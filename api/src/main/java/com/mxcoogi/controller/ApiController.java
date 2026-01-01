@@ -13,7 +13,7 @@ public class ApiController {
 
     @PostMapping("/connection")
     public ResponseEntity<?> connection(@RequestBody ConnectionDto request){
-
+        System.out.println(request.toString());
         return ResponseEntity.ok(null);
     }
 }

@@ -10,7 +10,7 @@
 
 <hr>
 
-<form id="migrationForm">
+<form id="connectionForm">
 
     <h3>Source Database</h3>
     <select name="sourceType">
@@ -19,7 +19,7 @@
         <option value="oracle">Oracle</option>
     </select><br>
 
-    <input type="text" name="sourceUrl" placeholder="JDBC URL"><br>
+    <input type="text" name="sourceUrl" placeholder="URL"><br>
     <input type="text" name="sourceUsername" placeholder="Username"><br>
     <input type="password" name="sourcePassword" placeholder="Password"><br>
 
@@ -32,7 +32,7 @@
         <option value="oracle">Oracle</option>
     </select><br>
 
-    <input type="text" name="targetUrl" placeholder="JDBC URL"><br>
+    <input type="text" name="targetUrl" placeholder="URL"><br>
     <input type="text" name="targetUsername" placeholder="Username"><br>
     <input type="password" name="targetPassword" placeholder="Password"><br>
 
@@ -43,10 +43,10 @@
 
 <script>
     function testConnection() {
-        const form = document.getElementById("migrationForm");
+        const form = document.getElementById("connectionForm");
         const data = Object.fromEntries(new FormData(form));
 
-        fetch("/api/migration/test", {
+        fetch("/api/connection", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(data)
