@@ -2,8 +2,8 @@
 services:
   mysql:
     image: mysql:8.4
-    container_name: mysql-local
-    restart: unless-stopped
+    container_name: mysql
+    restart: always
     ports:
       - "3306:3306"
     environment:
@@ -17,6 +17,20 @@ services:
     command:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
+  postgresql:
+    container_name: postgres
+    image:
+      postgres:latest
+    restart: always
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_PASSWORD: admin
+
+
 
 volumes:
   mysql_data:
+  postgres_data:
