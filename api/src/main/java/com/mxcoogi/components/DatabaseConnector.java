@@ -7,7 +7,8 @@ public interface DatabaseConnector {
     DataSource createDataSource(
             String username,
             String password,
-            String url,
-            String driverClassVersion
+            String url
     );
+
+    String getName();
 }
