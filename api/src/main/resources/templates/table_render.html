@@ -1,34 +1,200 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Table Info</title>
+  <title>ERD View</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f6f9;
+    }
+
+    #erd {
+      position: relative;
+      width: 2000px;
+      height: 1200px;
+    }
+
+    svg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+    }
+
+    .table {
+      position: absolute;
+      width: 260px;
+      background: white;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+
+    .table-header {
+      background: #2f80ed;
+      color: white;
+      padding: 8px;
+      font-weight: bold;
+      border-radius: 6px 6px 0 0;
+      cursor: move;
+      user-select: none;
+    }
+
+    .column {
+      padding: 6px 10px;
+      font-size: 13px;
+      border-top: 1px solid #eee;
+    }
+
+    .pk {
+      color: #d35400;
+      font-weight: bold;
+    }
+
+    .fk {
+      color: #16a085;
+      font-weight: bold;
+    }
+  </style>
 </head>
 <body>
 
-<h2>Source Tables</h2>
-<div id="sourceTables"></div>
-
-<h2>Target Tables</h2>
-<div id="targetTables"></div>
+<div id="erd">
+  <svg id="lines" width="2000" height="1200"></svg>
+</div>
 
 <script>
   const result = JSON.parse(sessionStorage.getItem("dbResult"));
+  const tables = result.sourceTable;
 
-  renderTableList("sourceTables", result.sourceTable);
-  renderTableList("targetTables", result.targetTable);
+  const erd = document.getElementById("erd");
+  const svg = document.getElementById("lines");
 
-  function renderTableList(elementId, tables) {
-    const container = document.getElementById(elementId);
-    const ul = document.createElement("ul");
+  /* =========================
+     1️⃣ 테이블 렌더링
+  ========================= */
+  tables.forEach((table, index) => {
+    const div = document.createElement("div");
+    div.className = "table";
+    div.dataset.table = table.tableName;
 
-    tables.forEach(t => {
-      const li = document.createElement("li");
-      li.textContent = `${t.schema ?? ''}.${t.tableName}`;
-      ul.appendChild(li);
+    div.style.left = (50 + (index % 4) * 300) + "px";
+    div.style.top = (50 + Math.floor(index / 4) * 260) + "px";
+
+    const header = document.createElement("div");
+    header.className = "table-header";
+    header.textContent = table.tableName;
+    div.appendChild(header);
+
+    table.columns.forEach(col => {
+      const c = document.createElement("div");
+      c.className = "column";
+      c.id = `${table.tableName}.${col.name}`;
+
+      let text = `${col.name} : ${col.type}`;
+
+      if (table.primaryKeys.some(pk => pk.columnName === col.name)) {
+        c.classList.add("pk");
+        text = "🔑 " + text;
+      }
+
+      if (table.foreignKeys.some(fk => fk.fkColumn === col.name)) {
+        c.classList.add("fk");
+        text = "🔗 " + text;
+      }
+
+      c.textContent = text;
+      div.appendChild(c);
     });
 
-    container.appendChild(ul);
+    erd.appendChild(div);
+  });
+
+  /* =========================
+     2️⃣ SVG 화살표 정의
+  ========================= */
+  function initSvg() {
+    svg.innerHTML = `
+      <defs>
+        <marker id="arrow" markerWidth="10" markerHeight="10"
+          refX="10" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L9,3 z" fill="#555"/>
+        </marker>
+      </defs>
+    `;
   }
+
+  /* =========================
+     3️⃣ FK 선 그리기
+  ========================= */
+  function drawLine(fromEl, toEl) {
+    const f = fromEl.getBoundingClientRect();
+    const t = toEl.getBoundingClientRect();
+
+    const x1 = f.right;
+    const y1 = f.top + f.height / 2 + window.scrollY;
+    const x2 = t.left;
+    const y2 = t.top + t.height / 2 + window.scrollY;
+
+    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    line.setAttribute("x1", x1);
+    line.setAttribute("y1", y1);
+    line.setAttribute("x2", x2);
+    line.setAttribute("y2", y2);
+    line.setAttribute("stroke", "#555");
+    line.setAttribute("stroke-width", "1.5");
+    line.setAttribute("marker-end", "url(#arrow)");
+
+    svg.appendChild(line);
+  }
+
+  function redrawLines() {
+    initSvg();
+    tables.forEach(table => {
+      table.foreignKeys.forEach(fk => {
+        const from = document.getElementById(`${table.tableName}.${fk.fkColumn}`);
+        const to = document.getElementById(`${fk.pkTable}.${fk.pkColumn}`);
+        if (from && to) drawLine(from, to);
+      });
+    });
+  }
+
+  setTimeout(redrawLines, 100);
+
+  /* =========================
+     4️⃣ 드래그 & 드롭
+  ========================= */
+  let dragging = null;
+  let offsetX = 0;
+  let offsetY = 0;
+
+  document.addEventListener("mousedown", e => {
+    const header = e.target.closest(".table-header");
+    if (!header) return;
+
+    dragging = header.parentElement;
+    const rect = dragging.getBoundingClientRect();
+
+    offsetX = e.clientX - rect.left;
+    offsetY = e.clientY - rect.top;
+
+    dragging.style.zIndex = 1000;
+  });
+
+  document.addEventListener("mousemove", e => {
+    if (!dragging) return;
+
+    dragging.style.left = (e.pageX - offsetX) + "px";
+    dragging.style.top = (e.pageY - offsetY) + "px";
+
+    redrawLines();
+  });
+
+  document.addEventListener("mouseup", () => {
+    if (dragging) dragging.style.zIndex = 1;
+    dragging = null;
+  });
 </script>
 
 </body>

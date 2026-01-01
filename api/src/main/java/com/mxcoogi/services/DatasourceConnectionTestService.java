@@ -44,7 +44,6 @@ public class DatasourceConnectionTestService {
         log.info("Connection established : {}", request.getTargetUrl());
         List<TableMetaDto> targetTable = getTables(targetConnection);
         map.put("targetTable", targetTable);
-        System.out.println(map.toString());
         return map;
     }
     public List<TableMetaDto> getTables(Connection connection) {
