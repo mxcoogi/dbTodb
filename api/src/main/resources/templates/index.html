@@ -42,9 +42,10 @@
 </form>
 
 <script>
-
     function testConnection() {
         const form = document.getElementById("connectionForm");
+
+        // 폼 데이터를 객체로 변환
         const data = Object.fromEntries(new FormData(form));
 
         fetch("/api/connection", {
@@ -52,12 +53,25 @@
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(data)
         })
-            .then(res => res.json())
+            .then(async res => {
+                if (!res.ok) throw new Error("Connection failed");
+                return res.json(); // 서버에서 sourceTable, targetTable JSON 받아옴
+            })
             .then(result => {
+                // 세션스토리지에 DB 스키마 정보 저장
                 sessionStorage.setItem("dbResult", JSON.stringify(result));
+
+                // 요청 보낸 폼 데이터도 세션스토리지에 저장 (원하면)
+                sessionStorage.setItem("dbRequest", JSON.stringify(data));
+
+                alert("Connection successful! DB info saved in sessionStorage.");
+                // 다음 페이지로 이동
                 window.location.href = "/table-render";
             })
-            .catch(() => alert("Connection failed"));
+            .catch(err => {
+                console.error(err);
+                alert("Connection failed");
+            });
     }
 </script>
 

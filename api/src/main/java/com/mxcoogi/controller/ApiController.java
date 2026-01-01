@@ -9,6 +9,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
@@ -20,5 +23,10 @@ public class ApiController {
     public ResponseEntity<?> connection(@RequestBody ConnectionDto request){
         Object data = datasourceConnectionTestService.testConnection(request);
         return ResponseEntity.ok(data);
+    }
+    @PostMapping("/job")
+    public ResponseEntity<?> job(@RequestBody List<Map<String, Object>> request){
+        System.out.println(request);
+        return ResponseEntity.ok(request);
     }
 }
