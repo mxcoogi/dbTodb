@@ -9,7 +9,7 @@ import java.sql.DriverManager;
 @Component
 public class MySqlConnector implements DatabaseConnector {
     @Override
-    public Connection createDataSource(
+    public Connection createConnection(
             String username,
             String password,
             String url) {

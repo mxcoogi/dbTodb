@@ -31,7 +31,7 @@ public class DataSourceFactory {
         if (connector == null) {
             throw new IllegalArgumentException("Unsupported DB type");
         }
-        return connector.createDataSource(
+        return connector.createConnection(
                 username,
                 password,
                 url
