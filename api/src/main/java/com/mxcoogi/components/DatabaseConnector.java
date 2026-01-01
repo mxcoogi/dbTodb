@@ -1,10 +1,11 @@
 package com.mxcoogi.components;
 
 import javax.sql.DataSource;
+import java.sql.Connection;
 
 public interface DatabaseConnector {
 
-    DataSource createDataSource(
+    Connection createDataSource(
             String username,
             String password,
             String url

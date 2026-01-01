@@ -14,8 +14,8 @@
 
     <h3>Source Database</h3>
     <select name="sourceType">
-        <option value="POSTGRESQL">PostgreSQL</option>
         <option value="MYSQL">MySQL</option>
+        <option value="POSTGRESQL">PostgreSQL</option>
         <option value="ORACLE">Oracle</option>
     </select><br>
 
@@ -27,8 +27,8 @@
 
     <h3>Target Database</h3>
     <select name="targetType">
-        <option value="POSTGRESQL">PostgreSQL</option>
         <option value="MYSQL">MySQL</option>
+        <option value="POSTGRESQL">PostgreSQL</option>
         <option value="ORACLE">Oracle</option>
     </select><br>
 
@@ -39,17 +39,10 @@
     <br>
     <button type="button" onclick="testConnection()">Test Connection</button>
 
-    <hr>
-
-    <h3>Source Tables</h3>
-    <div id="sourceTables"></div>
-
-    <h3>Target Tables</h3>
-    <div id="targetTables"></div>
-
 </form>
 
 <script>
+
     function testConnection() {
         const form = document.getElementById("connectionForm");
         const data = Object.fromEntries(new FormData(form));
@@ -60,32 +53,11 @@
             body: JSON.stringify(data)
         })
             .then(res => res.json())
-            .then(renderTables)
-            .catch(err => alert("Connection failed"));
-    }
-
-    function renderTables(result) {
-        renderTableList("sourceTables", result.sourceTable);
-        renderTableList("targetTables", result.targetTable);
-    }
-
-    function renderTableList(elementId, tables) {
-        const container = document.getElementById(elementId);
-        container.innerHTML = "";
-
-        if (!tables || tables.length === 0) {
-            container.innerHTML = "<p>No tables found</p>";
-            return;
-        }
-
-        const ul = document.createElement("ul");
-        tables.forEach(t => {
-            const li = document.createElement("li");
-            li.textContent = `${t.schema}.${t.tableName}`;
-            ul.appendChild(li);
-        });
-
-        container.appendChild(ul);
+            .then(result => {
+                sessionStorage.setItem("dbResult", JSON.stringify(result));
+                window.location.href = "/table-render";
+            })
+            .catch(() => alert("Connection failed"));
     }
 </script>
 

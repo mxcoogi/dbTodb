@@ -1,23 +1,21 @@
 package com.mxcoogi.components;
 
-import com.zaxxer.hikari.HikariDataSource;
 import org.springframework.stereotype.Component;
 
 import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.DriverManager;
+
 @Component
 public class MySqlConnector implements DatabaseConnector {
     @Override
-    public DataSource createDataSource(
+    public Connection createDataSource(
             String username,
             String password,
             String url) {
         try {
-            HikariDataSource dataSource = new HikariDataSource();
-            dataSource.setDriverClassName("com.mysql.cj.jdbc.Driver");
-            dataSource.setJdbcUrl(url);
-            dataSource.setUsername(username);
-            dataSource.setPassword(password);
-            return dataSource;
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            return DriverManager.getConnection(url, username, password);
         }catch (Exception e){
             throw new RuntimeException(e);
         }

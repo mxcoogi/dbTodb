@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import javax.sql.DataSource;
+import java.sql.Connection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,7 +25,7 @@ public class DataSourceFactory {
                 ));
     }
 
-    public DataSource create(DatabaseType type, String url, String username, String password) {
+    public Connection create(DatabaseType type, String url, String username, String password) {
         DatabaseConnector connector = connectorMap.get(type.name());
 
         if (connector == null) {

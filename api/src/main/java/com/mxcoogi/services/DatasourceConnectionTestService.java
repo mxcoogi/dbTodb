@@ -28,44 +28,32 @@ public class DatasourceConnectionTestService {
 
         Map<String,Object> map = new HashMap<>();
 
-        DataSource sourceDataSource = dataSourceFactory.create(
+        Connection sourceConnection = dataSourceFactory.create(
                 DatabaseType.valueOf(request.getSourceType()),
                 request.getSourceUrl(),
                 request.getSourceUsername(),
                 request.getSourcePassword());
-        try {
-            Connection connection = sourceDataSource.getConnection();
-            log.info("Connection established : {}", request.getSourceUrl());
-            List<TableInfoDto> sourceTable = this.getTables(sourceDataSource);
-            map.put("sourceTable", sourceTable);
-            connection.close();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+        log.info("Connection established : {}", request.getSourceUrl());
+        List<TableInfoDto> sourceTable = getTables(sourceConnection);
+        map.put("sourceTable", sourceTable);
 
-        DataSource targetDataSource = dataSourceFactory.create(
+        Connection targetConnection = dataSourceFactory.create(
                 DatabaseType.valueOf(request.getTargetType()),
                 request.getTargetUrl(),
                 request.getTargetUsername(),
                 request.getTargetPassword());
-        try {
-            Connection connection = targetDataSource.getConnection();
-            log.info("Connection established : {}", request.getTargetUrl());
-            List<TableInfoDto> targetTable = this.getTables(targetDataSource);
-            map.put("targetTable", targetTable);
-            connection.close();
+        log.info("Connection established : {}", request.getTargetUrl());
+        List<TableInfoDto> targetTable = getTables(targetConnection);
+        map.put("targetTable", targetTable);
 
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
         return map;
     }
-    public List<TableInfoDto> getTables(DataSource dataSource) {
-        try (Connection conn = dataSource.getConnection()) {
-            DatabaseMetaData meta = conn.getMetaData();
+    public List<TableInfoDto> getTables(Connection connection) {
+        try {
+            DatabaseMetaData meta = connection.getMetaData();
 
             ResultSet rs = meta.getTables(
-                    conn.getCatalog(),
+                    connection.getCatalog(),
                     null,
                     "%",
                     new String[]{"TABLE"}
@@ -84,7 +72,7 @@ public class DatasourceConnectionTestService {
                         rs.getString("TABLE_TYPE")
                 ));
             }
-
+            connection.close();
             return tables;
         } catch (SQLException e) {
             throw new RuntimeException("Failed to load tables", e);

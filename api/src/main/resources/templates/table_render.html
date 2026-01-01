@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Table Info</title>
+</head>
+<body>
+
+<h2>Source Tables</h2>
+<div id="sourceTables"></div>
+
+<h2>Target Tables</h2>
+<div id="targetTables"></div>
+
+<script>
+  const result = JSON.parse(sessionStorage.getItem("dbResult"));
+
+  renderTableList("sourceTables", result.sourceTable);
+  renderTableList("targetTables", result.targetTable);
+
+  function renderTableList(elementId, tables) {
+    const container = document.getElementById(elementId);
+    const ul = document.createElement("ul");
+
+    tables.forEach(t => {
+      const li = document.createElement("li");
+      li.textContent = `${t.schema ?? ''}.${t.tableName}`;
+      ul.appendChild(li);
+    });
+
+    container.appendChild(ul);
+  }
+</script>
+
+</body>
+</html>
