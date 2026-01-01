@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>DB Mapping ERD UI</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: #f4f6f9;
+        }
+
+        h2 {
+            margin: 0 0 10px 0;
+        }
+
+        #content {
+            flex: 1;
+            display: flex;
+            justify-content: space-around;
+            gap: 10px;
+            padding: 10px;
+            position: relative;
+        }
+
+        .panel {
+            flex: 0 0 400px; /* 패널 너비 넓힘 */
+            max-height: 80vh;
+            background: #eeeeee;
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+            overflow-y: auto;
+        }
+
+        .panel select {
+            padding: 4px;
+            margin-bottom: 10px;
+            width: 100%;
+        }
+
+        .columns-container {
+            background: white;
+            flex: 1;
+            padding: 6px;
+            border-radius: 4px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .column {
+            padding: 4px 6px;
+            border-bottom: 1px solid #ddd;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .column.selected {
+            background-color: #dcdcdc;
+        }
+
+        .pk {
+            color: #d35400;
+            font-weight: bold;
+        }
+
+        .fk {
+            color: #16a085;
+            font-weight: bold;
+        }
+
+        #mapping-container {
+            background: #fff;
+            padding: 10px;
+            margin: 10px;
+            border-radius: 6px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        svg#lines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        #save-btn {
+            margin: 10px;
+            padding: 8px 12px;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 4px;
+            border: none;
+            background-color: #2f80ed;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+<div id="content">
+    <!-- SVG 선 -->
+    <svg id="lines"></svg>
+
+    <!-- Left Panel: Source -->
+    <div class="panel" id="source-panel">
+        <h2>Source Tables</h2>
+        <select id="source-table-select">
+            <option value="">-- 선택 --</option>
+        </select>
+        <div id="source-columns" class="columns-container"></div>
+    </div>
+
+    <!-- Right Panel: Target -->
+    <div class="panel" id="target-panel">
+        <h2>Target Tables</h2>
+        <select id="target-table-select">
+            <option value="">-- 선택 --</option>
+        </select>
+        <div id="target-columns" class="columns-container"></div>
+    </div>
+</div>
+
+<!-- 매핑 리스트 및 저장 버튼 -->
+<div id="mapping-container">
+    <h3>Mappings</h3>
+    <ul id="mappings-ul"></ul>
+    <button id="save-btn">서버로 전송 & 초기화</button>
+</div>
+
+<script>
+    const dbResult = JSON.parse(sessionStorage.getItem('dbResult'));
+    const sourceSelect = document.getElementById('source-table-select');
+    const targetSelect = document.getElementById('target-table-select');
+    const sourceColumnsDiv = document.getElementById('source-columns');
+    const targetColumnsDiv = document.getElementById('target-columns');
+    const mappingsUl = document.getElementById('mappings-ul');
+    const svg = document.getElementById('lines');
+    const saveBtn = document.getElementById('save-btn');
+
+    let selectedSourceColumn = null;
+    let mappings = JSON.parse(sessionStorage.getItem('columnMappings') || '[]'); // 세션에서 불러오기
+
+    // 기존 매핑 불러오기
+    mappings.forEach(m => {
+        const li = document.createElement('li');
+        li.textContent = `${m.sourceTable}.${m.sourceColumn} → ${m.targetTable}.${m.targetColumn}`;
+        mappingsUl.appendChild(li);
+    });
+
+    // 테이블 목록 채우기
+    dbResult.sourceTable.forEach(table => {
+        const opt = document.createElement('option');
+        opt.value = table.tableName;
+        opt.textContent = table.tableName;
+        sourceSelect.appendChild(opt);
+    });
+    dbResult.targetTable.forEach(table => {
+        const opt = document.createElement('option');
+        opt.value = table.tableName;
+        opt.textContent = table.tableName;
+        targetSelect.appendChild(opt);
+    });
+
+    function showColumns(tableName, columnsDiv, tables) {
+        columnsDiv.innerHTML = '';
+        if (!tableName) return;
+        const table = tables.find(t => t.tableName === tableName);
+        if (!table) return;
+
+        table.columns.forEach(col => {
+            const div = document.createElement('div');
+            div.className = 'column';
+            div.textContent = `${col.name} : ${col.type}`;
+            if (table.primaryKeys.some(pk => pk.columnName === col.name)) div.classList.add('pk');
+            if (table.foreignKeys.some(fk => fk.fkColumn === col.name)) div.classList.add('fk');
+            columnsDiv.appendChild(div);
+        });
+    }
+
+    // 소스 컬럼 선택
+    sourceColumnsDiv.addEventListener('click', e => {
+        if (!e.target.classList.contains('column')) return;
+        if (selectedSourceColumn) selectedSourceColumn.classList.remove('selected');
+        selectedSourceColumn = e.target;
+        selectedSourceColumn.classList.add('selected');
+    });
+
+    // 타겟 컬럼 클릭 → 매핑 및 선 그리기
+    targetColumnsDiv.addEventListener('click', e => {
+        if (!e.target.classList.contains('column')) return;
+        if (!selectedSourceColumn) return alert('왼쪽 컬럼 먼저 선택해주세요.');
+
+        const sourceName = selectedSourceColumn.textContent.split(' : ')[0];
+        const targetName = e.target.textContent.split(' : ')[0];
+
+        // 매핑 추가
+        const li = document.createElement('li');
+        li.textContent = `${sourceSelect.value}.${sourceName} → ${targetSelect.value}.${targetName}`;
+        mappingsUl.appendChild(li);
+
+        // 세션스토리지에 저장
+        mappings.push({
+            sourceTable: sourceSelect.value,
+            sourceColumn: sourceName,
+            targetTable: targetSelect.value,
+            targetColumn: targetName
+        });
+        sessionStorage.setItem('columnMappings', JSON.stringify(mappings));
+
+        // 선 그리기
+        const sourceRect = selectedSourceColumn.getBoundingClientRect();
+        const targetRect = e.target.getBoundingClientRect();
+        const containerRect = document.getElementById('content').getBoundingClientRect();
+
+        const x1 = sourceRect.right - containerRect.left;
+        const y1 = sourceRect.top + sourceRect.height / 2 - containerRect.top;
+        const x2 = targetRect.left - containerRect.left;
+        const y2 = targetRect.top + targetRect.height / 2 - containerRect.top;
+
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', x1);
+        line.setAttribute('y1', y1);
+        line.setAttribute('x2', x2);
+        line.setAttribute('y2', y2);
+        line.setAttribute('stroke', '#555');
+        line.setAttribute('stroke-width', '2');
+        svg.appendChild(line);
+
+        selectedSourceColumn.classList.remove('selected');
+        selectedSourceColumn = null;
+    });
+
+    // 테이블 선택 이벤트
+    sourceSelect.addEventListener('change', e => showColumns(e.target.value, sourceColumnsDiv, dbResult.sourceTable));
+    targetSelect.addEventListener('change', e => showColumns(e.target.value, targetColumnsDiv, dbResult.targetTable));
+
+    // SVG 화살표 정의
+    const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+    const marker = document.createElementNS('http://www.w3.org/2000/svg','marker');
+    marker.setAttribute('id','arrow');
+    marker.setAttribute('markerWidth','10');
+    marker.setAttribute('markerHeight','10');
+    marker.setAttribute('refX','10');
+    marker.setAttribute('refY','3');
+    marker.setAttribute('orient','auto');
+    const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.setAttribute('d','M0,0 L0,6 L9,3 z');
+    path.setAttribute('fill','#555');
+    marker.appendChild(path);
+    defs.appendChild(marker);
+    svg.appendChild(defs);
+
+    // 저장 버튼 클릭 → 서버 전송 후 초기화
+    saveBtn.addEventListener('click', () => {
+        if (mappings.length === 0) return alert('매핑된 컬럼이 없습니다.');
+
+        // 서버 전송 (예시 POST)
+        fetch('/saveMappings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(mappings)
+        })
+            .then(res => {
+                if (!res.ok) throw new Error('전송 실패');
+                return res.json();
+            })
+            .then(data => {
+                alert('서버 전송 완료!');
+                // 초기화
+                mappings = [];
+                sessionStorage.removeItem('columnMappings');
+                mappingsUl.innerHTML = '';
+                svg.innerHTML = ''; // 선 초기화
+            })
+            .catch(err => alert(err.message));
+    });
+</script>
+
+</body>
+</html>

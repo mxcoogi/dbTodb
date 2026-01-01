@@ -3,7 +3,6 @@ package com.mxcoogi.controller;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
 
 @Controller
 public class GuiController {
@@ -15,5 +14,9 @@ public class GuiController {
     @GetMapping("/table-render")
     public String tableRender(Model model) {
         return "table_render";
+    }
+    @GetMapping("/job")
+    public String goJob(Model model) {
+        return "job";
     }
 }

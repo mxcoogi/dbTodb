@@ -9,41 +9,29 @@
       margin: 0 auto;
       display: flex;              /* Flexbox 사용 */
       flex-direction: column;     /* 세로로 쌓기 */
-      justify-content: center;    /* 수직 중앙 정렬 */
+      /*justify-content: center;    !* 수직 중앙 정렬 *!*/
       align-items: center;        /* 수평 중앙 정렬 */
       font-family: Arial, sans-serif;
       background: #f4f6f9;
     }
 
-    /* 상단 버튼 영역 고정 */
-    #top-bar {
-      padding: 10px;
-      background: #2f80ed;
-      width: 100%;
-      color: white;
+
+    #content {
       display: flex;
-      justify-content: flex-end;
-      align-items: center;
-      flex-shrink: 0;
+      flex-direction: column;
+      width: 80%;
+      height: 90%;
+      gap: 10px;
     }
 
-    #nextStep {
-      background: white;
-      color: #2f80ed;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-weight: bold;
-    }
 
     /* ERD만 스크롤 가능 */
     #erd-container {
       flex: 1;           /* 상단 제외한 영역 전체 */
       overflow: auto;    /* 가로/세로 스크롤 */
       background: #eeeeee;
-      width: 80%;
-      height: 80%;
+      width: 100%;
+      height: 100%;
 
     }
 
@@ -100,15 +88,19 @@
 </head>
 <body>
 
-<!-- 상단 버튼 고정 -->
-<div id="top-bar">
-  <button id="nextStep">다음 스텝</button>
-</div>
-
 <!-- ERD만 스크롤 -->
-<div id="erd-container">
-  <div id="erd">
-    <svg id="lines" width="3000" height="1600"></svg>
+<div id="content">
+  <div id="erd-container">
+    <div id="erd">
+      <svg id="lines" width="3000" height="1600"></svg>
+    </div>
+  </div>
+  <div>
+    <button
+            onclick="location.href='/job'"
+            style="padding: 8px 16px; font-size: 14px; cursor: pointer;">
+      Go to Job Page
+    </button>
   </div>
 </div>
 
