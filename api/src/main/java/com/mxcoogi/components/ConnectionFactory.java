@@ -13,11 +13,11 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Component
-public class DataSourceFactory {
+public class ConnectionFactory {
 
     private final Map<String, DatabaseConnector> connectorMap;
 
-    public DataSourceFactory(List<DatabaseConnector> connectors) {
+    public ConnectionFactory(List<DatabaseConnector> connectors) {
         this.connectorMap = connectors.stream()
                 .collect(Collectors.toMap(
                         DatabaseConnector::getName,
