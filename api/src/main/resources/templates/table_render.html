@@ -4,15 +4,51 @@
   <title>ERD View</title>
   <style>
     body {
-      margin: 0;
+      height: 100vh;
+      width: 100%;
+      margin: 0 auto;
+      display: flex;              /* Flexbox 사용 */
+      flex-direction: column;     /* 세로로 쌓기 */
+      justify-content: center;    /* 수직 중앙 정렬 */
+      align-items: center;        /* 수평 중앙 정렬 */
       font-family: Arial, sans-serif;
       background: #f4f6f9;
     }
 
+    /* 상단 버튼 영역 고정 */
+    #top-bar {
+      padding: 10px;
+      background: #2f80ed;
+      width: 100%;
+      color: white;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    #nextStep {
+      background: white;
+      color: #2f80ed;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    /* ERD만 스크롤 가능 */
+    #erd-container {
+      flex: 1;           /* 상단 제외한 영역 전체 */
+      overflow: auto;    /* 가로/세로 스크롤 */
+      background: #eeeeee;
+      width: 80%;
+      height: 80%;
+
+    }
+
     #erd {
       position: relative;
-      width: 3000px;
-      height: 1600px;
     }
 
     svg {
@@ -64,8 +100,16 @@
 </head>
 <body>
 
-<div id="erd">
-  <svg id="lines" width="3000" height="1600"></svg>
+<!-- 상단 버튼 고정 -->
+<div id="top-bar">
+  <button id="nextStep">다음 스텝</button>
+</div>
+
+<!-- ERD만 스크롤 -->
+<div id="erd-container">
+  <div id="erd">
+    <svg id="lines" width="3000" height="1600"></svg>
+  </div>
 </div>
 
 <script>
@@ -75,13 +119,10 @@
 
   const allTables = [];
 
-  /* =========================
-     1️⃣ 테이블 렌더
-  ========================= */
-  renderTables(result.sourceTable, "source", 50);
-  renderTables(result.targetTable, "target", 1600);
+  renderTables(result.sourceTable, "source", 50, 50);
+  renderTables(result.targetTable, "target", 50, 300);
 
-  function renderTables(tables, scope, startX) {
+  function renderTables(tables, scope, startX, startY) {
     tables.forEach((table, index) => {
       const div = document.createElement("div");
       div.className = "table";
@@ -89,7 +130,7 @@
       div.dataset.scope = scope;
 
       div.style.left = (startX + (index % 4) * 300) + "px";
-      div.style.top = (50 + Math.floor(index / 4) * 260) + "px";
+      div.style.top = (startY + Math.floor(index / 4) * 260) + "px";
 
       const header = document.createElement("div");
       header.className = "table-header " + (scope === "target" ? "target" : "");
@@ -102,17 +143,14 @@
         c.id = `${scope}.${table.tableName}.${col.name}`;
 
         let text = `${col.name} : ${col.type}`;
-
         if (table.primaryKeys.some(pk => pk.columnName === col.name)) {
           c.classList.add("pk");
           text = "🔑 " + text;
         }
-
         if (table.foreignKeys.some(fk => fk.fkColumn === col.name)) {
           c.classList.add("fk");
           text = "🔗 " + text;
         }
-
         c.textContent = text;
         div.appendChild(c);
       });
@@ -122,9 +160,6 @@
     });
   }
 
-  /* =========================
-     2️⃣ SVG 화살표
-  ========================= */
   function initSvg() {
     svg.innerHTML = `
       <defs>
@@ -139,11 +174,12 @@
   function drawLine(fromEl, toEl) {
     const f = fromEl.getBoundingClientRect();
     const t = toEl.getBoundingClientRect();
+    const containerRect = document.getElementById("erd-container").getBoundingClientRect();
 
-    const x1 = f.right;
-    const y1 = f.top + f.height / 2 + window.scrollY;
-    const x2 = t.left;
-    const y2 = t.top + t.height / 2 + window.scrollY;
+    const x1 = f.right - containerRect.left + document.getElementById("erd-container").scrollLeft;
+    const y1 = f.top - containerRect.top + f.height / 2 + document.getElementById("erd-container").scrollTop;
+    const x2 = t.left - containerRect.left + document.getElementById("erd-container").scrollLeft;
+    const y2 = t.top - containerRect.top + t.height / 2 + document.getElementById("erd-container").scrollTop;
 
     const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
     line.setAttribute("x1", x1);
@@ -159,15 +195,10 @@
 
   function redrawLines() {
     initSvg();
-
     allTables.forEach(table => {
       table.foreignKeys.forEach(fk => {
-        const from = document.getElementById(
-                `${table.scope}.${table.tableName}.${fk.fkColumn}`
-        );
-        const to = document.getElementById(
-                `${table.scope}.${fk.pkTable}.${fk.pkColumn}`
-        );
+        const from = document.getElementById(`${table.scope}.${table.tableName}.${fk.fkColumn}`);
+        const to = document.getElementById(`${table.scope}.${fk.pkTable}.${fk.pkColumn}`);
         if (from && to) drawLine(from, to);
       });
     });
@@ -175,9 +206,7 @@
 
   setTimeout(redrawLines, 150);
 
-  /* =========================
-     3️⃣ 드래그 & 드롭
-  ========================= */
+  /* 드래그 & 드롭 */
   let dragging = null;
   let offsetX = 0;
   let offsetY = 0;
@@ -197,16 +226,20 @@
 
   document.addEventListener("mousemove", e => {
     if (!dragging) return;
-
     dragging.style.left = (e.pageX - offsetX) + "px";
     dragging.style.top = (e.pageY - offsetY) + "px";
-
     redrawLines();
   });
 
   document.addEventListener("mouseup", () => {
     if (dragging) dragging.style.zIndex = 1;
     dragging = null;
+  });
+
+  /* 다음 스텝 버튼 */
+  document.getElementById("nextStep").addEventListener("click", () => {
+    alert("다음 단계: DB 비교 화면으로 이동");
+    // window.location.href = 'db_compare.html';
   });
 </script>
 
