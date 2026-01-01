@@ -1,5 +1,6 @@
 package com.mxcoogi.controller;
 
+import com.mxcoogi.dtos.BatchInfo;
 import com.mxcoogi.dtos.ConnectionDto;
 import com.mxcoogi.services.DatasourceConnectionTestService;
 import lombok.RequiredArgsConstructor;
@@ -25,8 +26,9 @@ public class ApiController {
         return ResponseEntity.ok(data);
     }
     @PostMapping("/job")
-    public ResponseEntity<?> job(@RequestBody List<Map<String, Object>> request){
-        System.out.println(request);
+    public ResponseEntity<?> job(@RequestBody BatchInfo request){
+        System.out.println(request.getConnectionDto());
+        System.out.println(request.getMappingDto());
         return ResponseEntity.ok(request);
     }
 }

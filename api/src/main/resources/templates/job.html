@@ -261,11 +261,16 @@
     saveBtn.addEventListener('click', () => {
         if (mappings.length === 0) return alert('매핑된 컬럼이 없습니다.');
 
+        const connectionData = JSON.parse(sessionStorage.getItem('dbRequest') || null);
+        const body = {
+            connectionDto : connectionData,
+            mappingDto : mappings
+        }
         // 서버 전송 (예시 POST)
         fetch('/api/job', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(mappings)
+            body: JSON.stringify(body)
         })
             .then(res => {
                 if (!res.ok) throw new Error('전송 실패');
