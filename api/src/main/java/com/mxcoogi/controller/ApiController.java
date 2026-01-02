@@ -2,6 +2,7 @@ package com.mxcoogi.controller;
 
 import com.mxcoogi.dtos.BatchInfo;
 import com.mxcoogi.dtos.ConnectionDto;
+import com.mxcoogi.services.BatchService;
 import com.mxcoogi.services.DatasourceConnectionTestService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class ApiController {
 
     private final DatasourceConnectionTestService  datasourceConnectionTestService;
+    private final BatchService batchService;
 
     @PostMapping("/connection")
     public ResponseEntity<?> connection(@RequestBody ConnectionDto request){
@@ -25,8 +27,8 @@ public class ApiController {
     }
     @PostMapping("/job")
     public ResponseEntity<?> job(@RequestBody BatchInfo request){
-        System.out.println(request.getConnectionDto());
-        System.out.println(request.getMappingDto());
+
+        batchService.startBatch(request);
         return ResponseEntity.ok(request);
     }
 }
