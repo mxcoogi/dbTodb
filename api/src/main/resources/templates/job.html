@@ -207,9 +207,7 @@
 
         // 세션스토리지에 저장
         mappings.push({
-            sourceTable: sourceSelect.value,
             sourceColumn: sourceName,
-            targetTable: targetSelect.value,
             targetColumn: targetName
         });
         sessionStorage.setItem('columnMappings', JSON.stringify(mappings));
@@ -264,6 +262,8 @@
         const connectionData = JSON.parse(sessionStorage.getItem('dbRequest') || null);
         const body = {
             connectionDto : connectionData,
+            sourceTable: sourceSelect.value,
+            targetTable: targetSelect.value,
             mappingDto : mappings
         }
         // 서버 전송 (예시 POST)

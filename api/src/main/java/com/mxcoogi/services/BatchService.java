@@ -1,38 +1,36 @@
 package com.mxcoogi.services;
 
-import com.mxcoogi.components.JsonUtilComponent;
-import com.mxcoogi.dtos.BatchInfo;
-import com.mxcoogi.dtos.ConnectionDto;
-import com.mxcoogi.dtos.MappingDto;
-import lombok.RequiredArgsConstructor;
 
+import com.mxcoogi.dtos.BatchInfo;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
-
-
-import java.util.List;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class BatchService {
-    private final JsonUtilComponent jsonUtil;
 
 
     public void startBatch(BatchInfo request) {
-        List<MappingDto> mappingDto = request.getMappingDto();
-        ConnectionDto connectionDto = request.getConnectionDto();
-        String jsonConnection = jsonUtil.fromConnection(connectionDto);
-        String jsonMapping = jsonUtil.fromMappings(mappingDto);
+
         try {
             ProcessBuilder pb = new ProcessBuilder(
                     "java",
                     "-jar",
                     "/Users/mxcoogi/dev/dbTodb/batch/build/libs/batch-1.0-SNAPSHOT.jar",
-                    "--spring.batch.job.name=" + "simpleJob"
-            );
-            log.info(pb.toString());
+                    "--spring.batch.job.name=" + "migrationJob",
+                    "sourceType=" + request.getConnectionDto().getSourceType(),
+                    "sourceUrl=" + request.getConnectionDto().getSourceUrl(),
+                    "sourceUsername=" + request.getConnectionDto().getSourceUsername(),
+                    "sourcePassword=" + request.getConnectionDto().getSourcePassword(),
+                    "sourceTable=" + request.getSourceTable(),
+                    "targetType=" + request.getConnectionDto().getTargetType(),
+                    "targetUrl=" + request.getConnectionDto().getTargetUrl(),
+                    "targetUsername=" + request.getConnectionDto().getTargetUsername(),
+                    "targetPassword=" + request.getConnectionDto().getTargetPassword(),
+                    "targetTable=" + request.getTargetTable()
+                    );
 
             pb.inheritIO();
             pb.start();
