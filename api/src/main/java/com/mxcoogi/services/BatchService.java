@@ -1,5 +1,6 @@
 package com.mxcoogi.services;
 
+import com.mxcoogi.components.JsonUtilComponent;
 import com.mxcoogi.dtos.BatchInfo;
 import com.mxcoogi.dtos.ConnectionDto;
 import com.mxcoogi.dtos.MappingDto;
@@ -16,17 +17,22 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class BatchService {
+    private final JsonUtilComponent jsonUtil;
 
 
     public void startBatch(BatchInfo request) {
         List<MappingDto> mappingDto = request.getMappingDto();
         ConnectionDto connectionDto = request.getConnectionDto();
+        String jsonConnection = jsonUtil.fromConnection(connectionDto);
+        String jsonMapping = jsonUtil.fromMappings(mappingDto);
         try {
             ProcessBuilder pb = new ProcessBuilder(
                     "java",
                     "-jar",
-                    "/path/to/batch.jar"
+                    "/Users/mxcoogi/dev/dbTodb/batch/build/libs/batch-1.0-SNAPSHOT.jar",
+                    "--spring.batch.job.name=" + "simpleJob"
             );
+            log.info(pb.toString());
 
             pb.inheritIO();
             pb.start();

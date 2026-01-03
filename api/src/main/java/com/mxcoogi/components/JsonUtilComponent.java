@@ -13,7 +13,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class JsonUtilComponent {
 
-    private final ObjectMapper objectMapper ;
+    private final ObjectMapper objectMapper;
 
     public ConnectionDto toConnection(String json) {
         try {
