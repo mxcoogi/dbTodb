@@ -7,6 +7,7 @@ API 서버를 통해 마이그레이션 요청을 받고,
 Batch 애플리케이션을 실행하여 **Source DB → Target DB**로 데이터를 이전합니다.
 
 ---
+[english docs](readme-en.md)
 
 ## ✨ 주요 기능
 
