@@ -28,7 +28,7 @@ public class BatchService {
             String encodedMapping = Base64.getEncoder().encodeToString(mappingJson.getBytes());
             ProcessBuilder pb = new ProcessBuilder(
                     "java", "-jar",
-                    "/Users/mxcoogi/dev/dbTodb/batch/build/libs/batch-1.0-SNAPSHOT.jar",
+                    "/app/batch.jar",
                     "--spring.batch.job.name=" + "migrationJob",
                     "sourceType=" + request.getConnectionDto().getSourceType(),
                     "sourceUrl=" + request.getConnectionDto().getSourceUrl(),
