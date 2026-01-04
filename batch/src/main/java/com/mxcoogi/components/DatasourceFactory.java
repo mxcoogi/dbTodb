@@ -25,7 +25,7 @@ public class DatasourceFactory {
 
         ds.setMaximumPoolSize(5);
         ds.setMinimumIdle(1);
-        ds.setAutoCommit(false);
+        ds.setAutoCommit(true);
 
         return ds;
     }
