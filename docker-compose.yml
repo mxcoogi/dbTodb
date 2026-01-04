@@ -4,5 +4,3 @@ services:
     image: db-migration-api:latest
     ports:
       - "8888:8888"
-    depends_on:
-      - mysql
